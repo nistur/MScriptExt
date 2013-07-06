@@ -1,12 +1,12 @@
 #include "MScriptPlugin.h"
 
-#include "MScript.h"
+#include "MScriptExt.h"
 
-MScript* s_script = NULL;
+MScriptExt* s_script = NULL;
 void StartPlugin(void)
 {
     MEngine* engine = MEngine::getInstance();
-    s_script = new MScript;
+    s_script = new MScriptExt;
     engine->setScriptContext(s_script);
 }
 
@@ -17,4 +17,4 @@ void EndPlugin(void)
         engine->setScriptContext(NULL);
 
     delete s_script;
-}
+}   

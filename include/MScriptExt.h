@@ -28,19 +28,19 @@
 //========================================================================
 
 
-#ifndef _M_SCRIPT_H
-#define _M_SCRIPT_H
+#ifndef _M_SCRIPT_EXT_H
+#define _M_SCRIPT_EXT_H
 
 #include <MEngine.h>
 #include <lua.hpp>
 
 
-class MScript : public MScriptContext
+class MScriptExt : public MScriptContext
 {
 public :
 
-	MScript(void);
-	~MScript(void);
+	MScriptExt(void);
+	~MScriptExt(void);
 
 private:
 
