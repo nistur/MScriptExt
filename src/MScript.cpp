@@ -30,6 +30,10 @@
 
 #include "MScript.h"
 
+#ifdef M_USE_GAME_EVENT
+#include "MGameEvent.h"
+#endif/*M_USE_GAME_EVENT*/
+
 static char g_currentDirectory[256] = "";
 static unsigned long g_startTick = 0;
 const char * LUA_VEC3 = "LUA_VEC3";
@@ -3746,6 +3750,13 @@ void MScript::init(void)
 
 	for(;mit!=mend;++mit)
 		lua_register(m_state, mit->first.c_str(), function);
+
+
+	// inform everything else that the script is init'd so
+	// we can extend the environment if required
+#ifdef M_USE_GAME_EVENT
+	MEventSend("MScriptInit");
+#endif
 }
 
 void MScript::clear(void)

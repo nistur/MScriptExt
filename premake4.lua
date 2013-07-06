@@ -9,11 +9,9 @@ solution "MScript"
           "." }
     includedirs { os.getenv("MSDKDIR") .. "/SDK/MCore/Includes",
               os.getenv("MSDKDIR") .. "/SDK/MEngine/Includes",
-              "include" }
+              os.getenv("HOME") .. "/dev/MEvent/include" }
 
-              print (os.getenv("MSDKDIR") .. "/SDK/MCore/Libs")
-
-    defines { "M_SAVE_FILE_BUILD" }
+    defines { "M_SCRIPT_EXT_BUILD", "M_USE_GAME_EVENT" }
     
     -- OS defines
     if os.is("windows") then
@@ -35,7 +33,7 @@ solution "MScript"
         includedirs { "lua" }
         targetdir "bin"
         
-    project "MSaveFile"
+    project "MScriptExt"
         kind "SharedLib"
         language "C++"
 
