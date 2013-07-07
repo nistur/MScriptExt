@@ -62,6 +62,7 @@ public:
 	void addScript(const char * filename);
 	void runScript(const char * filename);
 	void parse(const char* script);
+	void parseNamed(const char* script, const char* name);
 
 	// call function
 	bool startCallFunction(const char* name);

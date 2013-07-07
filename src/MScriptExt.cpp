@@ -3755,7 +3755,7 @@ void MScriptExt::init(void)
 	// inform everything else that the script is init'd so
 	// we can extend the environment if required
 #ifdef M_USE_GAME_EVENT
-	MEventSend("MScriptExInit");
+	MEventSend("MScriptInit");
 #endif
 }
 
@@ -3867,12 +3867,19 @@ void MScriptExt::runScript(const char * filename)
 
 void MScriptExt::parse(const char* script)
 {
+	parseNamed(script, NULL);
+}
+
+void MScriptExt::parseNamed(const char* script, const char* name)
+{
 	if(script == NULL) return;
 	if(*script == NULL) return;
 	if(m_state == NULL) return;
 	if(!m_isRunning) return;
 
-	if(luaL_dostring(m_state, script) != 0)
+	const char* scriptName = name == NULL ? "<UNKNOWN>" : name;
+
+	if(luaL_loadbuffer(m_state, script, strlen(script), scriptName) != 0)
 		printf("ERROR lua script :\n %s\n", lua_tostring(m_state, -1));
 }
 

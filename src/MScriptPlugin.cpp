@@ -3,14 +3,14 @@
 #include "MScriptExt.h"
 
 MScriptExt* s_script = NULL;
-void StartPlugin(void)
+void MPluginStart(MScriptExt)
 {
     MEngine* engine = MEngine::getInstance();
     s_script = new MScriptExt;
     engine->setScriptContext(s_script);
 }
 
-void EndPlugin(void)
+void MPluginEnd(MScriptExt)
 {
     MEngine* engine = MEngine::getInstance();
     if(engine->getScriptContext() == s_script)
