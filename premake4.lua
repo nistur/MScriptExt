@@ -9,9 +9,14 @@ solution "MScript"
           "." }
     includedirs { os.getenv("MSDKDIR") .. "/SDK/MCore/Includes",
               os.getenv("MSDKDIR") .. "/SDK/MEngine/Includes",
-              os.getenv("HOME") .. "/dev/MEvent/include" } -- need to put plugins somewhere
+              os.getenv("MSDKDIR") .. "/Plugins/Includes" }
 
-    defines { "M_SCRIPT_EXT_BUILD", "M_USE_GAME_EVENT" }
+    -- use MGameEvent if it exists
+    if os.isfile(os.getenv("MSDKDIR") .. "Plugins/Includes/MGameEvent.h") then
+        defines { "M_USE_GAME_EVENT" }
+    end
+
+    defines { "M_SCRIPT_EXT_BUILD" }
     
     -- OS defines
     if os.is("windows") then
