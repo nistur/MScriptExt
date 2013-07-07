@@ -8,20 +8,22 @@
             "src/**.cpp",
             "include/**.h",
             "**.md",
-            "lua/**",
+            "lua/**", -- do we need to do a build without lua for linking to the player?
             os.getenv("MSDKDIR") .. "SDK/**.h"
         }
         includedirs { "include" , "lua" }
         targetdir "bin"
+        -- make sure we're still called the right thing
+        -- but don't unset the prefix because it's more
+        -- difficult to link against
         targetname "MScriptExt"
-        --targetprefix ""
         defines { "M_SCRIPT_EXT_STATIC" }
 
         -- split the files up a bit nicer inside Visual Studio
         vpaths { 
             ["MCore/*"] = os.getenv("MSDKDIR") .. "/SDK/MCore/Includes/**.h",
             ["MEngine/*"] = os.getenv("MSDKDIR") .. "/SDK/MEngine/Includes/**.h",
-            ["lua/*"] = { "lua/**" },
+            ["Lua/*"] = { "lua/**" },
             ["Plugin/*"] = { "**.h", "**.cpp" },
             ["Doc/*"] = { "**.md" }
         }

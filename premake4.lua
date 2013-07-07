@@ -9,7 +9,7 @@ solution "MScript"
           "." }
     includedirs { os.getenv("MSDKDIR") .. "/SDK/MCore/Includes",
               os.getenv("MSDKDIR") .. "/SDK/MEngine/Includes",
-              os.getenv("HOME") .. "/dev/MEvent/include" }
+              os.getenv("HOME") .. "/dev/MEvent/include" } -- need to put plugins somewhere
 
     defines { "M_SCRIPT_EXT_BUILD", "M_USE_GAME_EVENT" }
     
