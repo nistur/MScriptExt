@@ -28,7 +28,7 @@
 //========================================================================
 
 
-#include "MScriptExt.h"
+#include "MScriptExtImpl.h"
 
 #ifdef M_USE_GAME_EVENT
 #include "MGameEvent.h"
@@ -37,6 +37,9 @@
 static char g_currentDirectory[256] = "";
 static unsigned long g_startTick = 0;
 const char * LUA_VEC3 = "LUA_VEC3";
+
+#define luaL_dobuffer(L, buff, sz, name) \
+	(luaL_loadbuffer(L, buff, sz, name) || lua_pcall(L, 0, LUA_MULTRET, 0))
 
 
 
@@ -3548,17 +3551,17 @@ int require(lua_State * L)
 // Init
 /////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-MScriptExt::MScriptExt(void):
+MScriptExtImpl::MScriptExtImpl(void):
 m_state(NULL),
 m_isRunning(false)
 {}
 
-MScriptExt::~MScriptExt(void)
+MScriptExtImpl::~MScriptExtImpl(void)
 {
 	clear();
 }
 
-void MScriptExt::init(void)
+void MScriptExtImpl::init(void)
 {
 	MEngine * engine = MEngine::getInstance();
 	MSystemContext * system = engine->getSystemContext();
@@ -3759,7 +3762,7 @@ void MScriptExt::init(void)
 #endif
 }
 
-void MScriptExt::clear(void)
+void MScriptExtImpl::clear(void)
 {
 	if(m_state)
 	{
@@ -3769,9 +3772,9 @@ void MScriptExt::clear(void)
 	m_isRunning = false;
 }
 
-int MScriptExt::function(lua_State * L)
+int MScriptExtImpl::function(lua_State * L)
 {
-	MScriptExt * script = (MScriptExt *)MEngine::getInstance()->getScriptContext();
+	MScriptExtImpl * script = (MScriptExtImpl *)MEngine::getInstance()->getScriptContext();
 
 	lua_Debug ar;
 	lua_getstack(L, 0, &ar);
@@ -3788,7 +3791,7 @@ int MScriptExt::function(lua_State * L)
 // but will only add to the lua state if it's
 // already running, and doesn't clear/stop
 // the state if it fails
-void MScriptExt::addScript(const char * filename)
+void MScriptExtImpl::addScript(const char * filename)
 {
 	if( (! m_isRunning) ||
 	    (! filename) ||
@@ -3821,7 +3824,7 @@ void MScriptExt::addScript(const char * filename)
 	m_isRunning = true;
 }
 
-void MScriptExt::runScript(const char * filename)
+void MScriptExtImpl::runScript(const char * filename)
 {
 	clear();
 
@@ -3865,25 +3868,26 @@ void MScriptExt::runScript(const char * filename)
 	m_isRunning = true;
 }
 
-void MScriptExt::parse(const char* script)
+void MScriptExtImpl::parse(const char* script)
 {
-	parseNamed(script, NULL);
+	parse(script, NULL, 0);
 }
 
-void MScriptExt::parseNamed(const char* script, const char* name)
+void MScriptExtImpl::parse(const char* script, const char* name, unsigned int size)
 {
 	if(script == NULL) return;
 	if(*script == NULL) return;
 	if(m_state == NULL) return;
-	if(!m_isRunning) return;
+	//if(!m_isRunning) return; // we can still parse into a non-running state
 
 	const char* scriptName = name == NULL ? "<UNKNOWN>" : name;
+	size = size ? size : strlen(script);
 
-	if(luaL_loadbuffer(m_state, script, strlen(script), scriptName) != 0)
+	if(luaL_dobuffer(m_state, script, size, scriptName) != 0)
 		printf("ERROR lua script :\n %s\n", lua_tostring(m_state, -1));
 }
 
-bool MScriptExt::startCallFunction(const char* name)
+bool MScriptExtImpl::startCallFunction(const char* name)
 {
 	if(m_isRunning)
 	{
@@ -3907,7 +3911,7 @@ bool MScriptExt::startCallFunction(const char* name)
 	return false;
 }
 
-bool MScriptExt::endCallFunction(int numArgs)
+bool MScriptExtImpl::endCallFunction(int numArgs)
 {
 	if(lua_pcall(m_state, numArgs, 0, 0) != 0)
 	{
@@ -3918,21 +3922,21 @@ bool MScriptExt::endCallFunction(int numArgs)
 	return true;
 }
 
-void MScriptExt::callFunction(const char * name)
+void MScriptExtImpl::callFunction(const char * name)
 {
 	if(startCallFunction(name))
 		endCallFunction();
 }
 
-void MScriptExt::addFunction(const char * name, int (*function)(void)){
+void MScriptExtImpl::addFunction(const char * name, int (*function)(void)){
 	m_functions[name] = function;
 }
 
-unsigned int MScriptExt::getArgsNumber(void){
+unsigned int MScriptExtImpl::getArgsNumber(void){
 	return lua_gettop(m_state);
 }
 
-void MScriptExt::getIntArray(unsigned int arg, int * values, unsigned int valuesNumber)
+void MScriptExtImpl::getIntArray(unsigned int arg, int * values, unsigned int valuesNumber)
 {
 	arg++;
 	if(lua_istable(m_state, arg) && (lua_objlen(m_state, arg) >= valuesNumber))
@@ -3947,7 +3951,7 @@ void MScriptExt::getIntArray(unsigned int arg, int * values, unsigned int values
 	}
 }
 
-void MScriptExt::getFloatArray(unsigned int arg, float * values, unsigned int valuesNumber)
+void MScriptExtImpl::getFloatArray(unsigned int arg, float * values, unsigned int valuesNumber)
 {
 	arg++;
 	if(lua_istable(m_state, arg) && (lua_objlen(m_state, arg) >= valuesNumber))
@@ -3962,23 +3966,23 @@ void MScriptExt::getFloatArray(unsigned int arg, float * values, unsigned int va
 	}
 }
 
-const char * MScriptExt::getString(unsigned int arg){
+const char * MScriptExtImpl::getString(unsigned int arg){
 	return lua_tostring(m_state, arg+1);
 }
 
-int MScriptExt::getInteger(unsigned int arg){
+int MScriptExtImpl::getInteger(unsigned int arg){
 	return (int)lua_tointeger(m_state, arg+1);
 }
 
-float MScriptExt::getFloat(unsigned int arg){
+float MScriptExtImpl::getFloat(unsigned int arg){
 	return (float)lua_tonumber(m_state, arg+1);
 }
 
-void* MScriptExt::getPointer(unsigned int arg){
+void* MScriptExtImpl::getPointer(unsigned int arg){
 	return (void*)lua_tointeger(m_state, arg+1);
 }
 
-void MScriptExt::pushIntArray(const int * values, unsigned int valuesNumber)
+void MScriptExtImpl::pushIntArray(const int * values, unsigned int valuesNumber)
 {
 	lua_newtable(m_state);
 	for(unsigned int i=0; i<valuesNumber; i++)
@@ -3989,7 +3993,7 @@ void MScriptExt::pushIntArray(const int * values, unsigned int valuesNumber)
 	}
 }
 
-void MScriptExt::pushFloatArray(const float * values, unsigned int valuesNumber)
+void MScriptExtImpl::pushFloatArray(const float * values, unsigned int valuesNumber)
 {
 	lua_newtable(m_state);
 	for(unsigned int i=0; i<valuesNumber; i++)
@@ -4000,22 +4004,22 @@ void MScriptExt::pushFloatArray(const float * values, unsigned int valuesNumber)
 	}
 }
 
-void MScriptExt::pushBoolean(bool value){
+void MScriptExtImpl::pushBoolean(bool value){
 	lua_pushboolean(m_state, (int)value);
 }
 
-void MScriptExt::pushString(const char * string){
+void MScriptExtImpl::pushString(const char * string){
 	lua_pushstring(m_state, string);
 }
 
-void MScriptExt::pushInteger(int value){
+void MScriptExtImpl::pushInteger(int value){
 	lua_pushinteger(m_state, (lua_Integer)value);
 }
 
-void MScriptExt::pushFloat(float value){
+void MScriptExtImpl::pushFloat(float value){
 	lua_pushnumber(m_state, (lua_Number)value);
 }
 
-void MScriptExt::pushPointer(void* value){
+void MScriptExtImpl::pushPointer(void* value){
 	lua_pushinteger(m_state, (lua_Integer)value);
 }

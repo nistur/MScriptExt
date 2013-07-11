@@ -32,63 +32,49 @@
 #define _M_SCRIPT_EXT_H
 
 #include <MEngine.h>
-#include <lua.hpp>
+#include <MResource.h>
 
-
-class MScriptExt : public MScriptContext
+class MScriptExt : public MScriptContext, public MResource
 {
-public :
-
-	MScriptExt(void);
-	~MScriptExt(void);
-
-private:
-
-	void init();
-	void clear();
-
-	static int function(lua_State * L);
-
-private :
-
-	bool m_isRunning;
-	lua_State * m_state;
-
-	map<string, int (*)(void)> m_functions;
-
 public:
 
 	// run script
-	void addScript(const char * filename);
-	void runScript(const char * filename);
-	void parse(const char* script);
-	void parseNamed(const char* script, const char* name);
+	virtual void addScript(const char * filename) = 0;
+	virtual void runScript(const char * filename) = 0;
+	virtual void parse(const char* script) = 0;
+	virtual void parse(const char* script, const char* name, unsigned int size) = 0;
 
 	// call function
-	bool startCallFunction(const char* name);
-	bool endCallFunction(int numArgs = 0);
-	void callFunction(const char * name);
+	virtual bool startCallFunction(const char* name) = 0;
+	virtual bool endCallFunction(int numArgs = 0) = 0;
+	virtual void callFunction(const char * name) = 0;
 
 	// add function
-	void addFunction(const char * name, int (*function)(void));
+	virtual void addFunction(const char * name, int (*function)(void)) = 0;
 
 	// variables
-	unsigned int getArgsNumber(void);
+	virtual unsigned int getArgsNumber(void) = 0;
 
-	void getIntArray(unsigned int arg, int * values, unsigned int valuesNumber);
-	void getFloatArray(unsigned int arg, float * values, unsigned int valuesNumber);
-	const char * getString(unsigned int arg);
-	int getInteger(unsigned int arg);
-	float getFloat(unsigned int arg);
-	void* getPointer(unsigned int arg);
+	virtual void getIntArray(unsigned int arg, int * values, unsigned int valuesNumber) = 0;
+	virtual void getFloatArray(unsigned int arg, float * values, unsigned int valuesNumber) = 0;
+	virtual const char * getString(unsigned int arg) = 0;
+	virtual int getInteger(unsigned int arg) = 0;
+	virtual float getFloat(unsigned int arg) = 0;
+	virtual void* getPointer(unsigned int arg) = 0;
 
-	void pushIntArray(const int * values, unsigned int valuesNumber);
-	void pushFloatArray(const float * values, unsigned int valuesNumber);
-	void pushString(const char * string);
-	void pushBoolean(bool value);
-	void pushInteger(int value);
-	void pushFloat(float value);
-	void pushPointer(void* value);
+	virtual void pushIntArray(const int * values, unsigned int valuesNumber) = 0;
+	virtual void pushFloatArray(const float * values, unsigned int valuesNumber) = 0;
+	virtual void pushString(const char * string) = 0;
+	virtual void pushBoolean(bool value) = 0;
+	virtual void pushInteger(int value) = 0;
+	virtual void pushFloat(float value) = 0;
+	virtual void pushPointer(void* value) = 0;
 };
+
+
+#define MScriptExtGet(inst)                              \
+{                                                        \
+    inst = (MScriptExt*)MResource::getNew("MScriptExt"); \
+}
 
 #endif
