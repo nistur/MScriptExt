@@ -4,14 +4,14 @@
 
 MScriptExtImpl* s_script = NULL;
 
-MResource* getter()
+MResource* MScriptExtGetter()
 {
     return s_script;
 }
 
 void MPluginStart(MScriptExt)
 {
-    MResource::registerFactory("MScriptExt", getter);
+    MResource::registerFactory("MScriptExt", MScriptExtGetter);
     MEngine* engine = MEngine::getInstance();
     s_script = new MScriptExtImpl;
     engine->setScriptContext(s_script);
@@ -19,7 +19,7 @@ void MPluginStart(MScriptExt)
 
 void MPluginEnd(MScriptExt)
 {
-    MResource::unregisterFactory("MScriptExt", getter);
+    MResource::unregisterFactory("MScriptExt", MScriptExtGetter);
     MEngine* engine = MEngine::getInstance();
     if(engine->getScriptContext() == s_script)
         engine->setScriptContext(NULL);
