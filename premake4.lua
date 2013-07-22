@@ -1,4 +1,8 @@
--- Particle system project
+dofile("embed.lua")
+
+embed "scripts"
+
+-- Script extension project
 solution "MScript"
     configurations { "Debug", "Release" }
     language "C++"
@@ -9,7 +13,8 @@ solution "MScript"
           "." }
     includedirs { os.getenv("MSDKDIR") .. "/SDK/MCore/Includes",
               os.getenv("MSDKDIR") .. "/SDK/MEngine/Includes",
-              os.getenv("MSDKDIR") .. "/Plugins/Includes" }
+              os.getenv("MSDKDIR") .. "/Plugins/Includes",
+              "scripts" }
 
     -- use MGameEvent if it exists
     if os.isfile(os.getenv("MSDKDIR") .. "Plugins/Includes/MGameEvent.h") then

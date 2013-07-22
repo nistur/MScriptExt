@@ -3212,6 +3212,8 @@ int getBehaviorVariable(lua_State * L)
 								pushFloatArray(L, *(MVector4 *)variable.getPointer(), 4);
 								return 1;
 							}
+						default:
+							break;
 						}
 					}
 				}
@@ -3297,6 +3299,8 @@ int setBehaviorVariable(lua_State * L)
 									*(MVector4 *)variable.getPointer() = vec;
 								return 0;
 							}
+						default:
+							break;
 						}
 					}
 				}
@@ -3552,9 +3556,10 @@ int require(lua_State * L)
 /////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 MScriptExtImpl::MScriptExtImpl(void):
-m_state(NULL),
-m_isRunning(false)
-{}
+m_state(NULL)
+{ 
+	//init();
+}
 
 MScriptExtImpl::~MScriptExtImpl(void)
 {
@@ -3769,7 +3774,7 @@ void MScriptExtImpl::clear(void)
 		lua_close(m_state);
 		m_state = NULL;
 	}
-	m_isRunning = false;
+	//m_isRunning = false;
 }
 
 int MScriptExtImpl::function(lua_State * L)
@@ -3793,8 +3798,7 @@ int MScriptExtImpl::function(lua_State * L)
 // the state if it fails
 void MScriptExtImpl::addScript(const char * filename)
 {
-	if( (! m_isRunning) ||
-	    (! filename) ||
+	if( (! filename) ||
 	    (strlen(filename) == 0) )
 	{
 		return;
@@ -3821,7 +3825,6 @@ void MScriptExtImpl::addScript(const char * filename)
 	
 	// finish
 	SAFE_FREE(text);
-	m_isRunning = true;
 }
 
 void MScriptExtImpl::runScript(const char * filename)
@@ -3829,16 +3832,10 @@ void MScriptExtImpl::runScript(const char * filename)
 	clear();
 
 	if(! filename)
-	{
-		m_isRunning = false;
 		return;
-	}
 
 	if(strlen(filename) == 0)
-	{
-		m_isRunning = false;
 		return;
-	}
 
 	// current directory
 	getRepertory(g_currentDirectory, filename);
@@ -3848,7 +3845,6 @@ void MScriptExtImpl::runScript(const char * filename)
 	if(! text)
 	{
 		printf("ERROR lua script : unable to read file %s\n", filename);
-		m_isRunning = false;
 		return;
 	}
 	
@@ -3858,14 +3854,12 @@ void MScriptExtImpl::runScript(const char * filename)
 	if(luaL_dostring(m_state, text) != 0)
 	{
 		printf("ERROR lua script :\n %s\n", lua_tostring(m_state, -1));
-		m_isRunning = false;
 		SAFE_FREE(text);
 		return;
 	}
 	
 	// finish
 	SAFE_FREE(text);
-	m_isRunning = true;
 }
 
 void MScriptExtImpl::parse(const char* script)
@@ -3876,7 +3870,7 @@ void MScriptExtImpl::parse(const char* script)
 void MScriptExtImpl::parse(const char* script, const char* name, unsigned int size)
 {
 	if(script == NULL) return;
-	if(*script == NULL) return;
+	if(*script == '\0') return;
 	if(m_state == NULL) return;
 	//if(!m_isRunning) return; // we can still parse into a non-running state
 
@@ -3889,26 +3883,22 @@ void MScriptExtImpl::parse(const char* script, const char* name, unsigned int si
 
 bool MScriptExtImpl::startCallFunction(const char* name)
 {
-	if(m_isRunning)
+	char* fn = new char[strlen(name)];
+	sprintf(fn, "%s", name);
+
+	char* tok = strtok(fn, ".:");
+	lua_getglobal(m_state, tok);
+	while((tok = strtok(NULL, ".:")))
+		lua_getfield(m_state, -1, tok);
+
+	if(!lua_isfunction(m_state, -1))
 	{
-		char* fn = new char[strlen(name)];
-		sprintf(fn, name);
-
-		char* tok = strtok(fn, ".:");
-		lua_getglobal(m_state, tok);
-		while(tok = strtok(NULL, ".:"))
-			lua_getfield(m_state, -1, tok);
-
-		if(!lua_isfunction(m_state, -1))
-		{
-			delete[] fn;
-			lua_pop(m_state, 1);
-			return false;
-		}
 		delete[] fn;
-		return true;
+		lua_pop(m_state, 1);
+		return false;
 	}
-	return false;
+	delete[] fn;
+	return true;
 }
 
 bool MScriptExtImpl::endCallFunction(int numArgs)
@@ -3916,7 +3906,6 @@ bool MScriptExtImpl::endCallFunction(int numArgs)
 	if(lua_pcall(m_state, numArgs, 0, 0) != 0)
 	{
 		printf("ERROR lua script :\n %s\n", lua_tostring(m_state, -1));
-		m_isRunning = false;
 		return false;
 	}
 	return true;
@@ -3928,9 +3917,33 @@ void MScriptExtImpl::callFunction(const char * name)
 		endCallFunction();
 }
 
-void MScriptExtImpl::addFunction(const char * name, int (*function)(void)){
+void MScriptExtImpl::addFunction(const char * name, CFunction function){
 	m_functions[name] = function;
 }
+
+int MScriptExtImpl::getNumCFunctions()
+{
+	return m_functions.size();
+}
+
+MScriptContext::CFunction MScriptExtImpl::getCFunction(int id, char* name)
+{
+	int i = 0;
+	for(map<string, CFunction>::iterator iFn = m_functions.begin();
+		iFn != m_functions.end();
+		++iFn)
+	{
+		if(i == id)
+		{
+			if(name)
+				sprintf(name, "%s", iFn->first.c_str());
+			return iFn->second;
+		}
+		++i;
+	}
+	return NULL;
+}
+
 
 unsigned int MScriptExtImpl::getArgsNumber(void){
 	return lua_gettop(m_state);

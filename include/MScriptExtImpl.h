@@ -44,16 +44,16 @@ public :
 
     void destroy() { delete this; }
 
-private:
-
     void init();
+    
+private:
     void clear();
 
     static int function(lua_State * L);
 
 private :
 
-    bool m_isRunning;
+    //bool m_isRunning;
     lua_State * m_state;
 
     map<string, int (*)(void)> m_functions;
@@ -73,6 +73,8 @@ public:
 
     // add function
     void addFunction(const char * name, int (*function)(void));
+    virtual int getNumCFunctions();
+    virtual CFunction getCFunction(int id, char* name);
 
     // variables
     unsigned int getArgsNumber(void);
