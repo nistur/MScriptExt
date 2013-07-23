@@ -3551,6 +3551,32 @@ int require(lua_State * L)
 }
 
 
+
+int readDir(lua_State * L)
+{
+	MScriptExt * script = (MScriptExt *)MEngine::getInstance()->getScriptContext();
+	MSystemContext * system = MEngine::getInstance()->getSystemContext();
+
+	if(! isFunctionOk(L, "readDir", 1))
+		return 0;
+	string dirname = lua_tostring(L, 1);
+	vector<string> files;
+
+	char globalFilename[256];
+	getGlobalFilename(globalFilename, system->getWorkingDirectory(), dirname.c_str());
+
+	readDirectory(globalFilename, &files);
+
+	lua_newtable(L);
+	for(unsigned int i=0; i<files.size(); i++)
+	{
+		lua_pushinteger(L, (lua_Integer)i+1);
+		lua_pushstring(L, files[i].c_str());
+		lua_rawset(L, -3);
+	}
+	return 1;
+}
+
 /////////////////////////////////////////////////////////////////////////////////////////////////////////
 // Init
 /////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -3749,6 +3775,8 @@ void MScriptExtImpl::init(void)
 	lua_register(m_state, "getWindowScale", getWindowScale);
 	lua_register(m_state, "getSystemTick",	getSystemTick);
 	lua_register(m_state, "quit",			quit);
+
+	lua_register(m_state, "readDirectory",  readDir);
 	
 
 	// register custom functions

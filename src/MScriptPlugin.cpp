@@ -35,6 +35,7 @@ public:
 
             // also load all editor scripts
             // add behaviors
+            // TODO: This should probably be done from within the above script
 
             MSystemContext* system = MEngine::getInstance()->getSystemContext();
             char editorScriptDir[256];
