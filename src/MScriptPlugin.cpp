@@ -13,6 +13,7 @@ MResource* MScriptExtGetter()
 #include "MEventListener.h"
 
 #include "editorLua.c"
+#include "tableLua.c"
 
 class MScriptExtEventListener : public MEventListener
 {
@@ -32,52 +33,9 @@ public:
             script->parse(scriptseditor, 
                           scriptseditorName, 
                           scriptseditorSize);
-
-            // also load all editor scripts
-            // add behaviors
-            // TODO: This should probably be done from within the above script
-
-            MSystemContext* system = MEngine::getInstance()->getSystemContext();
-            char editorScriptDir[256];
-            getGlobalFilename(editorScriptDir, system->getWorkingDirectory(), "editor");
-
-            vector<string> files;
-            readDirectory(editorScriptDir, &files);
-
-            for(vector<string>::iterator iFile = files.begin();
-                iFile != files.end();
-                iFile++)
-            {
-                if(iFile->find(".lua") != string::npos)
-                {
-                    char scriptFileName[256];
-                    getGlobalFilename(scriptFileName, editorScriptDir, iFile->c_str());
-                    MFile* scriptFile = M_fopen(scriptFileName, "r");
-                    if(scriptFile)
-                    {
-                        M_fseek(scriptFile, 0L, SEEK_END);
-                        long size = M_ftell(scriptFile);
-
-                        char* buffer = new char[size];
-
-                        M_rewind(scriptFile);
-                        if(M_fread(buffer, 1, size, scriptFile) != size)
-                        {
-                            delete[] buffer;
-                            M_fclose(scriptFile);
-                        }
-
-                        string name = "editor/" + *iFile;
-
-                        script->parse(buffer, name.c_str(), size);
-
-                        delete[] buffer;
-
-                        M_fclose(scriptFile);
-                    }
-                }
-            }
-
+            script->parse(scriptstable, 
+                          scriptstableName, 
+                          scriptstableSize);
         }
     }
 };

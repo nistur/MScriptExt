@@ -3481,7 +3481,12 @@ int doFile(lua_State * L)
 	// read text
 	char * text = readTextFile(globalFilename);
 	if(! text)
-		return 0;
+	{
+		// try reading it with a project-relative path
+		getGlobalFilename(globalFilename, MEngine::getInstance()->getSystemContext()->getWorkingDirectory(), filename);
+		if(!(text = readTextFile(globalFilename)))
+			return 0;
+	}
 	
 	// update current directory
 	getRepertory(g_currentDirectory, globalFilename);
@@ -3900,7 +3905,6 @@ void MScriptExtImpl::parse(const char* script, const char* name, unsigned int si
 	if(script == NULL) return;
 	if(*script == '\0') return;
 	if(m_state == NULL) return;
-	//if(!m_isRunning) return; // we can still parse into a non-running state
 
 	const char* scriptName = name == NULL ? "<UNKNOWN>" : name;
 	size = size ? size : strlen(script);
@@ -3916,6 +3920,7 @@ bool MScriptExtImpl::startCallFunction(const char* name)
 
 	char* tok = strtok(fn, ".:");
 	lua_getglobal(m_state, tok);
+	// TODO: check that we successfully get each field
 	while((tok = strtok(NULL, ".:")))
 		lua_getfield(m_state, -1, tok);
 

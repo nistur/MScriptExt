@@ -21,4 +21,10 @@ function editor.publish()
 	end --[[ publish_event_table loop ]]
 end --[[ editor.publish ]]
 
+--[[ load all editor scripts ]]
+local editor_scripts = readDirectory("editor")
+for i=1, #editor_scripts do
+	dofile(editor_scripts[i])
+end
+
 end --[[ isEditor() ]]
